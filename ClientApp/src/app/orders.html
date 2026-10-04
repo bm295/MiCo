@@ -1,0 +1,100 @@
+<main class="page-shell">
+  <section class="hero-panel">
+    <p class="eyebrow">MilkCO FnB Management</p>
+    <h1>Capture orders with the current stock snapshot.</h1>
+    <p class="hero-copy">Choose a table and select items for your next order.</p>
+    <div class="metric-grid">
+      <article>
+        <span class="metric-label">Orderable items</span><strong>{{ availableItems }}</strong>
+      </article>
+      <article>
+        <span class="metric-label">Units in stock</span><strong>{{ totalStock }}</strong>
+      </article>
+    </div>
+  </section>
+  <section class="form-panel" [attr.aria-busy]="loading() || submitting()">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">New Order</p>
+        <h2>Place an order</h2>
+      </div>
+    </div>
+    @if (error()) {
+      <p class="validation-summary" role="alert">{{ error() }}</p>
+    }
+    @if (loading()) {
+      <p role="status">Loading inventory and tables�</p>
+    } @else {
+      <button type="button" class="ghost-link" (click)="load()" [disabled]="submitting()">
+        Refresh stock
+      </button>
+      <form class="order-form" (ngSubmit)="submit()" #form="ngForm">
+        <fieldset [disabled]="submitting()">
+          <label class="field-block"
+            ><span>Customer name</span
+            ><input
+              name="customer"
+              [(ngModel)]="customer"
+              required
+              maxlength="100"
+              placeholder="e.g. Table 12 / Nguyen family"
+          /></label>
+          <label class="field-block"
+            ><span>Table</span
+            ><select name="table" [(ngModel)]="tableId" required>
+              @for (table of tables(); track table.tableId) {
+                <option [ngValue]="table.tableId">
+                  {{ table.name }} ({{ table.seatCount }} seats)
+                </option>
+              }
+            </select></label
+          >
+          @if (!tables().length) {
+            <p class="stock-warning">
+              No available tables. Add or update tables before placing an order.
+            </p>
+          }
+          <div class="inventory-header"><h3>Select quantities to submit</h3></div>
+          <div class="inventory-grid">
+            @for (item of items(); track item.itemId) {
+              <article class="inventory-card" [class.is-empty]="item.quantity <= 0">
+                <div class="inventory-meta">
+                  <div>
+                    <h4>{{ item.name }}</h4>
+                    <p>{{ item.quantity > 0 ? 'Ready to order' : 'Temporarily unavailable' }}</p>
+                  </div>
+                  <span class="stock-badge">Stock: {{ item.quantity }}</span>
+                </div>
+                <label class="quantity-field"
+                  ><span>Quantity</span
+                  ><input
+                    type="number"
+                    [name]="'quantity-' + item.itemId"
+                    [(ngModel)]="quantities[item.itemId]"
+                    min="0"
+                    [max]="item.quantity"
+                    step="1"
+                    [disabled]="item.quantity <= 0"
+                /></label>
+              </article>
+            } @empty {
+              <p class="empty-state">
+                No inventory records yet. Add inventory items before placing an order.
+              </p>
+            }
+          </div>
+          @if (!availableItems) {
+            <p class="stock-warning">No stock is currently available for ordering.</p>
+          }
+          <button
+            class="submit-button"
+            type="submit"
+            [disabled]="form.invalid || !availableItems || !tables().length"
+          >
+            {{ submitting() ? 'Placing order�' : 'Place order' }}
+          </button>
+        </fieldset>
+      </form>
+    }
+  </section>
+</main>

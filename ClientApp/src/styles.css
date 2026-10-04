@@ -367,3 +367,4 @@ input:disabled {
         font-size: 2.4rem;
     }
 }
+fieldset { border: 0; padding: 0; margin: 0; } select { width: 100%; padding: .85rem 1rem; border: 1px solid var(--line); border-radius: 16px; font: inherit; background: white; } .field-block + .field-block { margin-top: 1rem; } .quantity-field { margin-top: 1rem; }

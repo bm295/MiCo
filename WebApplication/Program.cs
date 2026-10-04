@@ -25,7 +25,7 @@ builder.Services.AddScoped<IPaymentUseCaseService, PaymentUseCaseService>();
 builder.Services.AddScoped<ITableUseCaseService, TableUseCaseService>();
 builder.Services.AddScoped<IReportingUseCaseService, ReportingUseCaseService>();
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
@@ -37,11 +37,9 @@ app.MapGet("/", context =>
     return Task.CompletedTask;
 });
 
-app.MapControllerRoute(
-    name: "order-page",
-    pattern: "orders/{action=Index}/{id?}",
-    defaults: new { controller = "OrderPage" });
-
 app.MapControllers();
+// Unknown API routes must remain 404 rather than returning the SPA document.
+app.MapFallback("/api/{**path}", () => Results.NotFound());
+app.MapFallbackToFile("index.html");
 
 app.Run();

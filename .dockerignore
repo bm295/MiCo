@@ -5,3 +5,8 @@
 .vs/
 .vscode/
 README.md
+**/node_modules/
+**/.angular/
+**/dist/
+WebApplication/wwwroot/
+TestResults/

@@ -2,3 +2,8 @@
 bin
 obj
 .dotnet/
+node_modules/
+.angular/
+dist/
+WebApplication/wwwroot/*
+!WebApplication/wwwroot/.gitkeep

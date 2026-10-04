@@ -1,105 +1,95 @@
 # MilkCO FnB Management
 
-MilkCO is a small FnB management sample for:
-- inventory tracking
-- order capture with stock validation and stock deduction
-- payment tracking
-- PMP project documents under `docs/`
+MilkCO provides inventory tracking, order capture with stock validation and deduction, payment tracking, and PMP project documents under `docs/`.
 
-The app includes a web order page on `/orders` and APIs aligned to domain use cases (orders, kitchen, payments, tables, inventory, and reporting).
+## Stack and architecture
 
-## Stack
-- C# 14
-- .NET 10 (`net10.0`)
-- ASP.NET Core
-- Entity Framework Core 10 + SQL Server
-- Docker + Docker Compose
+- Angular 21 standalone client in `ClientApp/` (Node.js 24, npm)
+- C# 14 / ASP.NET Core 10 REST API in `WebApplication/`
+- Entity Framework Core 10 and SQL Server
+- Docker Compose
 
-
-## Architecture
-The repository now follows a ports-and-adapters style:
-- `Application/Ports`: repository port contracts
-- `Application/Services`: use-case orchestration
-- `Infrastructure/Persistence`: EF Core adapters implementing ports
-- `Controllers`: API adapters calling use-case services only
-
-## Main routes
-- Order page: `/orders`
-- Health API: `GET /api/health`
-- Orders API: `GET /api/orders`
-- Add order item: `POST /api/orders/{orderId}/items`
-- Remove order item: `DELETE /api/orders/{orderId}/items/{orderItemId}`
-- Send order to kitchen: `POST /api/orders/{orderId}/send-to-kitchen`
-- Close order: `POST /api/orders/{orderId}/close`
-- Inventory API: `GET /api/inventory`
-- Payments API: `GET /api/payments`, `POST /api/payments/orders/{orderId}`
-- Tables API: `GET /api/tables`
-- Reporting API: `GET /api/reports/operations-summary`
+The Angular client uses relative `/api` URLs. During development Angular proxies these to .NET; in production .NET serves the built client from `wwwroot` and handles SPA routes. Backend use cases remain in `Application/Services`, repository contracts in `Application/Ports`, and EF adapters in `Infrastructure/Persistence`.
 
 ## Run with Docker
-Starts SQL Server and the app together.
 
 ```bash
 docker compose up --build -d
 ```
 
-Database connection in this mode:
-- The `api` container connects to SQL Server using the Compose service name `sqlserver`, not `localhost`.
-- The connection string is configured in `docker-compose.yml` through `ConnectionStrings__DefaultConnection`.
-- The value used by the app container is:
+Open `http://localhost:8080/orders`. The multi-stage Dockerfile builds Angular and .NET, then packages both in the ASP.NET runtime image.
 
-```text
-Server=sqlserver,1433;Database=MilkCoPOSDb;User Id=sa;Password=Your_strong_password123;TrustServerCertificate=True;MultipleActiveResultSets=true
-```
+The API connects to SQL Server through the `sqlserver` Compose service. Configure `ConnectionStrings__DefaultConnection` in `docker-compose.yml` for different database credentials. Stop with `docker compose down`.
 
-If you need to change the database host, port, or credentials for Docker-to-Docker startup, update the `ConnectionStrings__DefaultConnection` value under the `api` service in `docker-compose.yml`.
+## Local development
 
-Then open:
-- `http://localhost:8080/orders`
-
-Stop the environment:
-
-```bash
-docker compose down
-```
-
-## Run locally with .NET SDK 10
-Make sure SQL Server is available at the connection string in `WebApplication/appsettings.json`.
-
-If you want to use SQL Server from Docker while running the app locally, start only the database container:
+Install .NET SDK 10 and Node.js 24. Start SQL Server, for example:
 
 ```bash
 docker compose up -d sqlserver
 ```
 
-Then set `ConnectionStrings:DefaultConnection` in `WebApplication/appsettings.json` to:
+Configure the backend connection without editing committed settings (PowerShell):
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost,14333;Database=MilkCoPOSDb;User Id=sa;Password=Your_strong_password123;TrustServerCertificate=True;MultipleActiveResultSets=true"
-  }
-}
+```powershell
+$env:ConnectionStrings__DefaultConnection = 'Server=localhost,14333;Database=MilkCoPOSDb;User Id=sa;Password=Your_strong_password123;TrustServerCertificate=True;MultipleActiveResultSets=true'
+dotnet run --project WebApplication/WebApplication.csproj --urls http://localhost:5000
 ```
 
+In a second terminal:
+
 ```bash
-dotnet restore MiCo.sln
-dotnet build MiCo.sln
+cd ClientApp
+npm ci
+npm start
+```
+
+Open `http://localhost:4200/orders`. `ClientApp/proxy.conf.json` forwards `/api/**` to `http://localhost:5000`; update the target if the backend uses another port. The database must already have the EF schema applied; apply migrations with `dotnet ef database update --project WebApplication` if needed.
+
+## Build and serve through .NET
+
+```bash
+cd ClientApp
+npm ci
+npm run build:hosted
+cd ..
 dotnet run --project WebApplication/WebApplication.csproj
 ```
 
-Then open:
-- `http://localhost:5000/orders`
-- `https://localhost:5001/orders`
+Open `http://localhost:5000/orders`. `build:hosted` builds the client and copies browser assets to `WebApplication/wwwroot`. Run it again after changing the client and before publishing .NET locally. Generated assets are excluded from Git.
 
-## Order page flow
-1. Add inventory items first if the catalog is empty.
-2. Open `/orders`.
-3. Enter the customer name.
-4. Set quantities for one or more inventory items.
-5. Submit the form to create the order.
-6. Review the confirmation page and the saved API record if needed.
+## Verification
+
+```bash
+dotnet test HelloWorldMvc.sln
+cd ClientApp
+npm run build
+npm test
+```
+
+## Order flow
+
+1. Add inventory and available tables through the APIs if the catalog is empty.
+2. Open `/orders`, enter a customer name, select a table, and choose quantities.
+3. Submit the order; the backend validates stock and saves the order.
+4. Review `/orders/Confirmation/{id}`. This route also supports direct navigation and reloads.
+
+The client displays loading, empty-stock, unavailable-table, and API-error states. Failed submissions refresh the stock snapshot while preserving the entered customer and quantities.
+
+## Main API routes
+
+- `GET /api/health`
+- `GET /api/orders`, `GET /api/orders/{id}`, `POST /api/orders`
+- `POST /api/orders/{orderId}/items`
+- `DELETE /api/orders/{orderId}/items/{orderItemId}`
+- `POST /api/orders/{orderId}/send-to-kitchen`
+- `POST /api/orders/{orderId}/close`
+- `GET /api/inventory`, `POST /api/inventory`
+- `GET /api/tables`, `POST /api/tables`
+- `GET /api/payments`, `POST /api/payments/orders/{orderId}`
+- `GET /api/reports/operations-summary`
 
 ## Project documents
-- Charter and supporting documents: `docs/01-project-charter/`
+
+- Charter: `docs/01-project-charter/`
 - PMP process library: `docs/pmp-processes/`
