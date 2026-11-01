@@ -23,3 +23,8 @@ Built with Angular 21, ASP.NET Core 10, Entity Framework Core 10, and SQL Server
 
 - [Project charter documents](docs/01-project-charter/)
 - [PMP process library](docs/pmp-processes/)
+
+## LLM request observability
+
+Đo latency, token usage và chi phí ước tính cho mỗi request LLM:
+[xem cấu hình, API và kiểm thử](docs/development/llm-observability.md).

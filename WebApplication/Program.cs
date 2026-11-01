@@ -25,6 +25,10 @@ builder.Services.AddScoped<IPaymentUseCaseService, PaymentUseCaseService>();
 builder.Services.AddScoped<ITableUseCaseService, TableUseCaseService>();
 builder.Services.AddScoped<IReportingUseCaseService, ReportingUseCaseService>();
 
+builder.Services.Configure<MilkCoPOS.Infrastructure.Llm.LlmOptions>(builder.Configuration.GetSection("Llm"));
+builder.Services.AddHttpClient<MilkCoPOS.Application.Llm.ILlmClient, MilkCoPOS.Infrastructure.Llm.HttpLlmClient>(
+    client => client.Timeout = Timeout.InfiniteTimeSpan);
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
