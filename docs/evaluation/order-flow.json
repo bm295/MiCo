@@ -1,0 +1,16 @@
+{
+  "caseId": "order-flow-v1",
+  "question": "What happens when submitting an order?",
+  "answer": "The backend validates stock and saves the order. Payment is automatically captured.",
+  "k": 2,
+  "relevance": {"docs/business/order-flow.md#3": 3},
+  "retrieved": [
+    {"id": "docs/business/order-flow.md#3", "text": "Submit the order; the backend validates stock and saves the order."},
+    {"id": "docs/business/order-flow.md#4", "text": "Review `/orders/Confirmation/{id}`. This route also supports direct navigation and reloads."}
+  ],
+  "claims": [
+    {"text": "The backend validates stock and saves the order.", "verdict": "supported", "evidence": [{"chunkId": "docs/business/order-flow.md#3", "quote": "the backend validates stock and saves the order."}]},
+    {"text": "Payment is automatically captured.", "verdict": "unsupported", "evidence": []}
+  ],
+  "reviewer": "example-human-review-v1"
+}
